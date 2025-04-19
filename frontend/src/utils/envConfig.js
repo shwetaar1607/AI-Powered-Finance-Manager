@@ -1,0 +1,1 @@
+export const MODE_ENV = "dev";

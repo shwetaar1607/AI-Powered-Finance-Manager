@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
@@ -72,10 +72,19 @@ const SignIn = () => {
                 </button>
               </div>
             </div>
+            <div className="flex justify-end items-center mb-6">
+              <NavLink
+                to="/forgot-password"
+                className="text-blue-500 hover:underline"
+              >
+                Forgot password?
+              </NavLink>
+            </div>
             <Button type="submit" disabled={loading}>
               {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
+
           <p className="text-center text-sm text-gray-600 mt-4">
             Don’t have an account?{" "}
             <Link to="/signup" className="text-blue-600 hover:underline">

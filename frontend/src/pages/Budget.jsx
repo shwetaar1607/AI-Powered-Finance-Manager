@@ -111,7 +111,7 @@ const Budget = () => {
             </p>
             <p>Month: {formatMonth(b.month)}</p>
             {b.spent > b.limit && (
-              <p className="text-finance-warning">⚠ Over Budget</p>
+              <p className="text-red-400">⚠ Over Budget</p>
             )}
             <button
               onClick={() => handleDelete(b._id)}

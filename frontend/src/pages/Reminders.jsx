@@ -67,7 +67,14 @@ const Reminders = () => {
     const due = new Date(dueDate);
     const diffInMs = due - now;
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-    return diffInDays <= 1;
+    return diffInDays <= 1 && diffInMs > 0;
+  };
+
+  // Check if due date has already passed
+  const isOverdue = (dueDate) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    return now > due;
   };
 
   return (
@@ -100,6 +107,7 @@ const Reminders = () => {
           <ul className="divide-y divide-gray-200">
             {reminders.map((reminder) => {
               const dueSoon = isDueSoon(reminder.dueDate);
+              const overdue = isOverdue(reminder.dueDate);
               const dueDateFormatted = new Date(
                 reminder.dueDate
               ).toLocaleDateString();
@@ -116,10 +124,19 @@ const Reminders = () => {
                     <p className="text-sm text-finance-danger">
                       Amount: ${reminder.amount} – Due {dueDateFormatted}
                     </p>
-                    {!reminder.paid && dueSoon && (
-                      <span className="text-red-400 font-semibold flex items-center mt-1">
-                        <FaClock className="mr-1" /> Pay Bill - Due Soon!
-                      </span>
+
+                    {!reminder.paid && (
+                      <>
+                        {overdue ? (
+                          <span className="text-red-500 font-semibold flex items-center mt-1">
+                            <FaClock className="mr-1" /> Payment Delayed!
+                          </span>
+                        ) : dueSoon ? (
+                          <span className="text-red-400 font-semibold flex items-center mt-1">
+                            <FaClock className="mr-1" /> Pay Bill - Due Soon!
+                          </span>
+                        ) : null}
+                      </>
                     )}
                   </div>
 

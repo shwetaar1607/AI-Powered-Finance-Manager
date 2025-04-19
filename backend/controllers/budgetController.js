@@ -22,7 +22,6 @@ exports.getExpenses = async (req, res) => {
 exports.createBudget = async (req, res) => {
   const { category, limit, month } = req.body;
 
-
   const budget = await Budget.create({
     user: req.user._id,
     category,
@@ -33,22 +32,26 @@ exports.createBudget = async (req, res) => {
   res.status(201).json(budget);
 };
 
-const randomTransactionId = `txn_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 exports.addExpense = async (req, res) => {
   const { category, amount, description, date } = req.body;
+  const randomTransactionId = Math.random().toString(36).substr(2, 9);
 
   try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const expense = await Expense.create({
       user: req.user._id,
       category,
-      amount,
+      amount: parseFloat(amount),
       description,
       date: date ? new Date(date) : new Date(),
       transaction_id: randomTransactionId,
     });
 
     const expenseDate = new Date(expense.date);
-    const expenseMonth = expenseDate.toISOString().slice(0, 7); // e.g., "2025-04"
+    const expenseMonth = expenseDate.toISOString().slice(0, 7);
 
     const budget = await Budget.findOne({
       user: req.user._id,
@@ -57,20 +60,40 @@ exports.addExpense = async (req, res) => {
     });
 
     if (budget) {
-      budget.spent += parseFloat(amount);
+      // Recalculate total spent for that category and month
+      const monthStart = new Date(`${expenseMonth}-01`);
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+      const totalSpent = await Expense.aggregate([
+        {
+          $match: {
+            user: req.user._id,
+            category,
+            date: { $gte: monthStart, $lt: monthEnd },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]);
+
+      budget.spent = totalSpent[0]?.total || 0;
       await budget.save();
 
       if (budget.alertsEnabled && budget.spent > budget.limit) {
         console.log(
           `⚠ Alert: Budget exceeded for ${category} in ${expenseMonth}`
         );
-        // Optional: trigger email or notification alert here
       }
     }
 
     res.status(201).json({ expense, updatedBudget: budget });
   } catch (error) {
-    console.error(error);
+    console.error("Error adding expense:", error);
     res.status(500).json({ message: "Failed to add expense" });
   }
 };
@@ -116,7 +139,9 @@ exports.getMonthlySummary = async (req, res) => {
     const { month } = req.query; // Format: "2025-04"
 
     if (!month || !/^\d{4}-\d{2}$/.test(month)) {
-      return res.status(400).json({ message: 'Invalid month format. Use YYYY-MM' });
+      return res
+        .status(400)
+        .json({ message: "Invalid month format. Use YYYY-MM" });
     }
 
     const startDate = new Date(`${month}-01`);
@@ -159,7 +184,7 @@ exports.getMonthlySummary = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Failed to generate monthly summary' });
+    res.status(500).json({ message: "Failed to generate monthly summary" });
   }
 };
 

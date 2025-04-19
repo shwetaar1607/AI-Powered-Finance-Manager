@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Layout from "../components/layout/Layout";
 import {
   getGoals,
@@ -15,6 +15,7 @@ const Advice = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState(null); // Track goal being edited
+  const hasFetched = useRef(false);
 
   // Fetch goals
   const fetchGoals = async () => {
@@ -42,25 +43,6 @@ const Advice = () => {
     }
   };
 
-  // Handle taking action on a suggestion
-  const handleTakeAction = async (suggestion, goalId) => {
-    if (suggestion.action === "increase_savings") {
-      try {
-        const goal = goals.find((g) => g._id === goalId);
-        const newAchieved = goal.achieved_amount + suggestion.impact_amount;
-        await updateGoalProgress(goalId, {
-          goal_name: goal.goal_name,
-          goal_amount: goal.goal_amount,
-          achieved_amount: newAchieved,
-        });
-        alert(`Added $${suggestion.impact_amount} to ${goal.goal_name}`);
-        fetchGoals();
-      } catch (err) {
-        setError("Failed to update goal");
-        console.error(err);
-      }
-    }
-  };
 
   // Open modal for adding a new goal
   const handleAddGoal = () => {
@@ -74,10 +56,11 @@ const Advice = () => {
     setIsModalOpen(true);
   };
 
-  useEffect(() => {
+  if (!hasFetched.current) {
     fetchGoals();
     fetchSuggestions();
-  }, []);
+    hasFetched.current = true;
+  }
 
   return (
     <Layout>
