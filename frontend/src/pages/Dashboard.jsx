@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Layout from "../components/layout/Layout";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
@@ -14,6 +14,7 @@ import {
 import { getBudgets, getExpenses } from "../services/budgetService";
 import { getReminders } from "../services/reminderService";
 import { getInvestments } from "../services/investmentService";
+import { getAIPrediction } from "../services/adviceService";
 import { useNavigate } from "react-router-dom";
 
 ChartJS.register(
@@ -31,26 +32,41 @@ const Dashboard = () => {
   const [expenses, setExpenses] = useState([]);
   const [investments, setInvestments] = useState([]);
   const [reminders, setReminders] = useState([]);
+  const [prediction, setPrediction] = useState([]); // Initialize as empty array
 
   const navigate = useNavigate();
+  const fetchedOnceRef = useRef(false);
 
   useEffect(() => {
+    if (fetchedOnceRef.current) return; // Skip if already fetched
+    fetchedOnceRef.current = true;
+
     const fetchData = async () => {
       try {
-        const [budgetData, expenseData, investmentData, reminderData] =
-          await Promise.all([
-            getBudgets(),
-            getExpenses(),
-            getInvestments(),
-            getReminders(),
-          ]);
+        const [
+          budgetData,
+          expenseData,
+          investmentData,
+          reminderData,
+          aiPrediction,
+        ] = await Promise.all([
+          getBudgets(),
+          getExpenses(),
+          getInvestments(),
+          getReminders(),
+          getAIPrediction(),
+        ]);
 
         setBudgets(budgetData);
         setExpenses(expenseData);
         setInvestments(investmentData);
         setReminders(reminderData);
+        // Ensure aiPrediction is an array; fallback to empty array if not
+        setPrediction(Array.isArray(aiPrediction) ? aiPrediction : []);
       } catch (error) {
         console.error("Dashboard data fetch failed:", error);
+        // Set prediction to empty array on error
+        setPrediction([]);
       }
     };
 
@@ -172,23 +188,56 @@ const Dashboard = () => {
         </div>
 
         {/* AI Prediction redirection */}
-        <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-          <h2 className="text-xl text-finance-dark font-semibold mb-2">
+        <div className="p-6 h-fit bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+          <h2 className="text-xl text-finance-dark font-semibold mb-4">
             AI Insights
           </h2>
-          <p className="text-finance-success text-sm">
-            Suggestion: Allocate more to savings.
-          </p>
-          <p className="text-gray-500 text-sm mt-2">
-            Cut dining expenses by 10% to save $50.
-          </p>
+
+          {prediction.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              No predictions available. Please add more expense or budget data.
+            </p>
+          ) : (
+            <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+              {prediction.map((item) => (
+                <div
+                  key={item.id}
+                  className={`border-l-4 pl-3 rounded bg-gray-50`}
+                  style={{ borderColor: item.color }}
+                >
+                  <p className="text-sm font-semibold text-gray-800">
+                    {item.category}{" "}
+                    <span className="ml-2 text-xs text-gray-400">
+                      ({item.priority} Priority)
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {item.prediction}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1 italic">
+                    {item.advice}
+                  </p>
+                  {item.expected_savings !== 0 && (
+                    <p className="text-sm text-green-600 mt-1 font-medium">
+                      💰 Expected Savings:{" "}
+                      {typeof item.expected_savings === "number"
+                        ? `$${item.expected_savings}`
+                        : item.expected_savings}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           <button
             onClick={() => navigate("/advice")}
             className="mt-4 text-finance-primary hover:underline text-sm"
           >
-            View Details
+            Get detailed AI insights
           </button>
         </div>
+
         {/* Investment Chart */}
         <div className="bg-white p-6 rounded-2xl shadow">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">

@@ -66,14 +66,14 @@ const Profile = () => {
           <h2 className="text-xl text-finance-dark font-semibold flex items-center">
             <FaUser className="text-finance-primary mr-2" /> Profile Details
           </h2>
-          {!editMode && (
+          {/* {!editMode && (
             <button
               onClick={() => setEditMode(true)}
               className="text-finance-primary hover:text-finance-primary/80 flex items-center"
             >
               <FaEdit className="mr-1" /> Edit
             </button>
-          )}
+          )} */}
         </div>
 
         {editMode ? (

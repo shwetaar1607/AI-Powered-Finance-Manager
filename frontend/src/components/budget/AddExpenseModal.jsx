@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createExpense } from "../../services/budgetService";
 import "../../assets/styles/modals.css";
 import Tesseract from "tesseract.js";
@@ -16,7 +16,6 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImage(file);
-      // Generate a preview URL for the uploaded image
       setImagePreview(URL.createObjectURL(file));
     } else {
       setImage(null);
@@ -35,6 +34,8 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
         logger: (m) => console.log(m),
       });
 
+      console.log("OCR Result:\n", text); // Debug log
+
       const extractedData = extractDataFromText(text);
       setForm((prev) => ({
         ...prev,
@@ -49,20 +50,25 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const extractDataFromText = (text) => {
-    const lines = text.split("\n").map((line) => line.toLowerCase());
+    const lines = text.split("\n").map((line) => line.toLowerCase().trim());
     let category = "";
     let amount = "";
     let date = "";
 
     for (const line of lines) {
-      if (!category && /food|grocery|restaurant|shopping/i.test(line)) {
-        category = line.match(/food|grocery|restaurant|shopping/i)[0];
+      // Category detection
+      if (!category && /(food|grocery|restaurant|shopping|travel|rent|bill)/i.test(line)) {
+        category = line.match(/(food|grocery|restaurant|shopping|travel|rent|bill)/i)[0];
       }
-      if (!amount && /\$\d+\.?\d{0,2}/.test(line)) {
-        amount = line.match(/\$\d+\.?\d{0,2}/)[0].replace("$", "");
+
+      // Amount detection
+      if (!amount && /\b\d+(\.\d{1,2})?\b/.test(line)) {
+        amount = line.match(/\b\d+(\.\d{1,2})?\b/)[0];
       }
-      if (!date && /\d{1,2}[/-]\d{1,2}[/-]\d{2,4}/.test(line)) {
-        const dateMatch = line.match(/\d{1,2}[/-]\d{1,2}[/-]\d{2,4}/)[0];
+
+      // Date detection (dd/mm/yyyy or dd-mm-yyyy)
+      if (!date && /\b\d{2}[\/\-]\d{2}[\/\-]\d{4}\b/.test(line)) {
+        const dateMatch = line.match(/\b\d{2}[\/\-]\d{2}[\/\-]\d{4}\b/)[0];
         date = formatDate(dateMatch);
       }
     }
@@ -71,11 +77,9 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const formatDate = (dateStr) => {
-    const [month, day, year] = dateStr.includes("/")
-      ? dateStr.split("/")
-      : dateStr.split("-");
-    const fullYear = year.length === 2 ? `20${year}` : year;
-    return `${fullYear}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    const delimiter = dateStr.includes("/") ? "/" : "-";
+    const [day, month, year] = dateStr.split(delimiter);
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   };
 
   const handleSubmit = async () => {
@@ -84,8 +88,7 @@ const AddExpenseModal = ({ isOpen, onClose, onSuccess }) => {
     onClose();
   };
 
-  // Clean up the object URL when the component unmounts or image changes
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
