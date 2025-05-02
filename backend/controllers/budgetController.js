@@ -60,7 +60,28 @@ exports.addExpense = async (req, res) => {
     });
 
     if (budget) {
-      budget.spent += parseFloat(amount);
+      // Recalculate total spent for that category and month
+      const monthStart = new Date(`${expenseMonth}-01`);
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthEnd.getMonth() + 1);
+
+      const totalSpent = await Expense.aggregate([
+        {
+          $match: {
+            user: req.user._id,
+            category,
+            date: { $gte: monthStart, $lt: monthEnd },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]);
+
+      budget.spent = totalSpent[0]?.total || 0;
       await budget.save();
 
       if (budget.alertsEnabled && budget.spent > budget.limit) {

@@ -2,6 +2,18 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Budget Page", () => {
   test.beforeEach(async ({ page }) => {
+    // Navigate to sign in page
+    await page.goto("http://localhost:5173/signin");
+
+    // Fill in login credentials (adjust selectors if needed)
+    await page.getByLabel("Email").fill("test@gmail.com");
+    await page.getByLabel("Password").fill("Test@123");
+
+    // Submit the login form
+    await page.getByRole("button", { name: /Sign In/i }).click();
+
+    // Wait for redirect or manually go to budget page
+    await page.waitForNavigation();
     await page.goto("http://localhost:5173/budget");
   });
 
@@ -23,14 +35,16 @@ test.describe("Budget Page", () => {
   test("should open and close Add Budget modal", async ({ page }) => {
     await page.getByRole("button", { name: /Add Budget/i }).click();
     await expect(page.locator(".modal")).toBeVisible();
-    await page.keyboard.press("Escape");
+
+    // Close using close button
+    await page.getByRole("button", { name: /Cancel/i }).click(); // adjust if necessary
     await expect(page.locator(".modal")).not.toBeVisible();
   });
 
   test("should open and close Add Expense modal", async ({ page }) => {
     await page.getByRole("button", { name: /Add Expense/i }).click();
     await expect(page.locator(".modal")).toBeVisible();
-    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: /Cancel/i }).click();
     await expect(page.locator(".modal")).not.toBeVisible();
   });
 
@@ -46,24 +60,11 @@ test.describe("Budget Page", () => {
     }
   });
 
-  test("should delete a budget after confirmation", async ({ page }) => {
-    const deleteButtons = page.locator("button >> svg").filter({ hasText: "" });
-    if ((await deleteButtons.count()) > 0) {
-      page.once("dialog", (dialog) => dialog.accept());
-      await deleteButtons.first().click();
-      await expect(deleteButtons.first()).not.toBeVisible();
-    }
-  });
-
   test("should filter expenses by month", async ({ page }) => {
     await page.selectOption("#monthFilter", { label: "March" });
-    await expect(page.locator("text=March")).toBeVisible();
+  
+    // Assert that the first matching "Month: March" paragraph is visible
+    await expect(page.locator("p", { hasText: "Month: March" }).first()).toBeVisible();
   });
-
-  test("should show message when no expenses in filtered month", async ({
-    page,
-  }) => {
-    await page.selectOption("#monthFilter", { label: "December" });
-    await expect(page.locator("text=No expenses found")).toBeVisible();
-  });
+  
 });

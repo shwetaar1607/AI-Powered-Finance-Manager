@@ -36,22 +36,16 @@ const Budget = () => {
 
   function formatMonth(dateString) {
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
     ];
-    const date = new Date(dateString);
-    return monthNames[date.getMonth()];
+    // Split the string into year and month
+    const [year, month] = dateString.split("-");
+    // Convert month to number (0-based index)
+    const monthIndex = parseInt(month, 10) - 1;
+    return monthNames[monthIndex];
   }
+
 
   // Get unique months from expenses and transactions
   const getUniqueMonths = () => {
@@ -109,7 +103,7 @@ const Budget = () => {
             <p>
               Spent: ${b.spent} / ${b.limit}
             </p>
-            <p>Month: {formatMonth(b.month)}</p>
+            <p >Month: {formatMonth(b.month)}</p>
             {b.spent > b.limit && (
               <p className="text-red-400">⚠ Over Budget</p>
             )}
