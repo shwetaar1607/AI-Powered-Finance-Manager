@@ -6,8 +6,13 @@ test.describe("Budget Page", () => {
     await page.goto("http://localhost:5173/signin");
 
     // Fill in login credentials (adjust selectors if needed)
+<<<<<<< HEAD
     await page.getByLabel("Email").fill("test@gmail.com");
     await page.getByLabel("Password").fill("Test@123");
+=======
+    await page.getByLabel("Email").fill("vidyadharchalla333@gmail.com");
+    await page.getByLabel("Password").fill("Vidya@123");
+>>>>>>> eb39be279fb7f83e975ea8bdfd9d070c41433732
 
     // Submit the login form
     await page.getByRole("button", { name: /Sign In/i }).click();
@@ -63,8 +68,13 @@ test.describe("Budget Page", () => {
   test("should filter expenses by month", async ({ page }) => {
     await page.selectOption("#monthFilter", { label: "March" });
   
+<<<<<<< HEAD
     // Assert that the first matching "Month: March" paragraph is visible
     await expect(page.locator("p", { hasText: "Month: March" }).first()).toBeVisible();
+=======
+    // Assert that filtered expense with "Month: March" appears
+    await expect(page.locator("p", { hasText: "Month: March" })).toBeVisible();
+>>>>>>> eb39be279fb7f83e975ea8bdfd9d070c41433732
   });
   
 });
