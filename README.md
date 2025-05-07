@@ -58,6 +58,7 @@ An intelligent personal finance management web application that leverages AI and
 4. **Set up environment variables**
    Create a .env file in both / and /client with required API keys (Plaid, Stripe, MongoDB URI, JWT secret).
 5. **Run the application**
-   start backend- npm run dev
-   In another terminal start frontend - cd client
-                                         npm start
+   ```bash
+    npm run dev # start backend
+    cd client #In another terminal start frontend 
+    npm start
