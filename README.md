@@ -52,11 +52,12 @@ An intelligent personal finance management web application that leverages AI and
    git clone https://github.com/your-username/ai-finance-manager.git
    cd ai-finance-manager
 2. **Install dependencies**
+    ```bash
    npm install # for frontend/backend
    cd client && npm install
-3. **Set up environment variables**
+4. **Set up environment variables**
    Create a .env file in both / and /client with required API keys (Plaid, Stripe, MongoDB URI, JWT secret).
-4. **Run the application**
+5. **Run the application**
    start backend- npm run dev
    In another terminal start frontend - cd client
                                          npm start
